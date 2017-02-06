@@ -1,0 +1,359 @@
+<?php
+/**
+ * Created by @OnyxTM.
+ * User: Morteza Bagher Telegram id : @mench
+ * GitHub Url: https://github.com/onyxtm/countmsgbot
+ * Channel : @phpbots , @ch_jockdoni , @ch_pm , @onyxtm
+ * Date: 11/12/2016
+ * Time: 09:19 PM
+ */
+
+$update = json_decode(file_get_contents('php://input'));
+$txt = $update->message->text;
+$chat_id = $update->message->chat->id;
+$message_id = $update->message->message_id;
+$channel_forward = $update->channel_post->forward_from;
+$channel_text = $update->channel_post->text;
+$from = $update->message->from->id;
+$chatid = $update->callback_query->message->chat->id;
+$data = $update->callback_query->data;
+$msgid = $update->callback_query->message->message_id;
+
+$token = file_get_contents("token.txt");//yes
+define("TOKEN",$token);
+
+$time = file_get_contents("http://api.bridge-ads.ir/td?td=time");
+$date = file_get_contents("http://api.bridge-ads.ir/td?td=date");
+
+$admin = 322242763;
+$admin = file_get_contents("admin.txt");//yes
+
+$boole = file_get_contents("bool.txt");//yes
+$bool = explode("#-!",$boole);
+
+$channel = file_get_contents("channel.txt");//yes
+$start = file_get_contents("start.txt"); //yes
+
+function contains($needle, $haystack)
+{
+    return strpos($haystack, $needle) !== false;
+}
+
+$user = file_get_contents('Member.txt');
+$members = explode("\n", $user);
+if (!in_array($chat_id, $members)) {
+    $add_user = file_get_contents('Member.txt');
+    $add_user .= $chat_id . "\n";
+    file_put_contents('Member.txt', $add_user);
+}
+
+function bridge($method, $datas=[]){
+    $url = "https://api.telegram.org/bot".TOKEN."/".$method;
+    $ch = curl_init();
+    curl_setopt($ch,CURLOPT_URL,$url);
+    curl_setopt($ch,CURLOPT_RETURNTRANSFER,true);
+    curl_setopt($ch,CURLOPT_POSTFIELDS,http_build_query($datas));
+    $res = curl_exec($ch);
+    if(curl_error($ch)){
+        var_dump(curl_error($ch));
+    }else{
+        return json_decode($res);
+    }
+}
+
+$st = file_get_contents("step.txt");
+$step = explode("\n",$st);
+$reply = $update->message->reply_to_message;
+$firstname = $update->message->chat->first_name;
+$lastname = $update->message->chat->last_name;
+
+if(preg_match('/^\/([Ss]tart)/',$txt) && $chat_id != $admin){
+
+    $x = $start;
+    if (contains("FRNAME", $x)) {
+        $x = str_replace("FRNAME", $firstname, $x);
+    }
+    if (contains("CHID", $x)) {
+        $x = str_replace("CHID", $chat_id, $x);
+    }
+    if (contains("LSNAME", $x)) {
+        $x = str_replace("LSNAME", $lastname, $x);
+    }
+    if (contains("TIME", $x)) {
+        $x = str_replace("TIME", $time, $x);
+    }
+    if (contains("DATE", $x)) {
+        $x = str_replace("DATE", $date, $x);
+    }
+    bridge("sendMessage",[
+        'chat_id'=>$chat_id,
+        'text'=>$x,
+        'parse_mode'=>"HTML"
+    ]);
+    bridge("forwardmessage",[
+        'chat_id'=>$chat_id,
+        'from_chat_id'=>"@ch_jockdoni",
+        'message_id'=>810
+    ]);
+}else if(preg_match('/^\/([Cc]reator)/',$txt)){
+
+    $x = $start;
+    if (contains("FRNAME", $x)) {
+        $x = str_replace("FRNAME", $firstname, $x);
+    }
+    if (contains("CHID", $x)) {
+        $x = str_replace("CHID", $chat_id, $x);
+    }
+    if (contains("LSNAME", $x)) {
+        $x = str_replace("LSNAME", $lastname, $x);
+    }
+    if (contains("TIME", $x)) {
+        $x = str_replace("TIME", $time, $x);
+    }
+    if (contains("DATE", $x)) {
+        $x = str_replace("DATE", $date, $x);
+    }
+    bridge("sendMessage",[
+        'chat_id'=>$chat_id,
+        'text'=>"این ربات توسط @countmsgbot تهیه و ساخته شده",
+        'parse_mode'=>"HTML"
+    ]);
+}else if(preg_match('/^\/([Ss]tart)/' ,$txt) && $chat_id == $admin) {
+    $x = $start;
+    if (contains("FRNAME", $x)) {
+        $x = str_replace("FRNAME", $firstname, $x);
+    }
+    if (contains("CHID", $x)) {
+        $x = str_replace("CHID", $chat_id, $x);
+    }
+    if (contains("LSNAME", $x)) {
+        $x = str_replace("LSNAME", $lastname, $x);
+    }
+    if (contains("TIME", $x)) {
+        $x = str_replace("TIME", $time, $x);
+    }
+    if (contains("DATE", $x)) {
+        $x = str_replace("DATE", $date, $x);
+    }
+    bridge("sendMessage", [
+        'chat_id' => $chat_id,
+        'text' => $x,
+        'reply_markup'=>json_encode(['keyboard'=>[
+            array("مدیریت")
+        ],'resize_keyboard'=>true
+        ])
+    ]);
+    bridge("forwardmessage", [
+        'chat_id' => $chat_id,
+        'from_chat_id' => "@ch_jockdoni",
+        'message_id' => 810
+    ]);
+
+}else if($txt == "مدیریت" && $chat_id == $admin) {
+    bridge("sendMessage", [
+        'chat_id' => $chat_id,
+        'text' => "به بخش مدیریت خوش آمدید :",
+        'reply_markup'=>json_encode(['keyboard'=>[
+            [['text'=>'تغییر متن شروع'],['text'=>"تنظیم آیدی کانال"]],
+            [['text'=>'راهنما'],['text'=>"آمار"]],
+            ["خروج از مدیریت"]
+        ],'resize_keyboard'=>true
+        ])
+    ]);
+}else if($txt == "خروج از مدیریت" && $chat_id == $admin){
+    bridge("sendMessage", [
+        'chat_id' => $chat_id,
+        'text' => "شما از پنل مدیریت خارج شدید",
+        'reply_markup'=>json_encode(['keyboard'=>[
+            array("مدیریت")
+        ],'resize_keyboard'=>true
+        ])
+    ]);
+}else if($txt == "تنظیم آیدی کانال" && $step[0] == "NULL" && $chat_id == $admin){
+    bridge("sendMessage", [
+        'chat_id' => $chat_id,
+        'text' => "آیدی کانال را همراه با @ وارد نمایید.
+        برای لغو عملیات دستور /cancell را ارسال کنید"
+    ]);
+    file_put_contents("step.txt","CHANNEL");
+}elseif($step[0] == "CHANNEL" && $chat_id == $admin){
+    file_put_contents("step.txt","NULL");
+    bridge("sendMessage", [
+        'chat_id' => $chat_id,
+        'text' => "آیدی کانال ثبت شد.
+        $txt",
+        'reply_markup'=>json_encode(['keyboard'=>[
+            [['text'=>'تغییر متن شروع'],['text'=>"تنظیم آیدی کانال"]],
+            [['text'=>'راهنما'],['text'=>"آمار"]]
+        ],'resize_keyboard'=>true
+        ])
+    ]);
+    file_put_contents("channel.txt","$txt");
+}else if($txt == "تغییر متن شروع" && $step[0] == "NULL" && $chat_id == $admin){
+    bridge("sendMessage", [
+        'chat_id' => $chat_id,
+        'text' => "متن شروع جدید را ارسال کنید مقادیر :
+        FRNAME = نام کاربر
+LSNAME = فامیلی کاربر
+CHID = آیدی عددی کاربر
+TIME = زمان
+DATE = تاریخ
+
+برای لغو عملیات دستور /cancell را ارسال کنید",
+    ]);
+    file_put_contents("step.txt","START");
+
+}elseif($step[0] == "START" && $chat_id == $admin){
+    file_put_contents("step.txt","NULL");
+    bridge("sendMessage", [
+        'chat_id' => $chat_id,
+        'text' => "متن شروع ثبت شد.
+        $txt",
+        'reply_markup'=>json_encode(['keyboard'=>[
+            [['text'=>'تغییر متن شروع'],['text'=>"تنظیم آیدی کانال"]],
+            [['text'=>'راهنما'],['text'=>"آمار"]]
+        ],'resize_keyboard'=>true
+        ])
+    ]);
+    file_put_contents("start.txt","$txt");
+}elseif($txt == "/cancell" && $chat_id == $admin){
+    file_put_contents("step.txt","NULL");
+    bridge("sendMessage", [
+        'chat_id' => $chat_id,
+        'text' => "عملیات لغو شد.",
+        'reply_markup'=>json_encode(['keyboard'=>[
+            [['text'=>'تغییر متن شروع'],['text'=>"تنظیم آیدی کانال"]],
+            [['text'=>'راهنما'],['text'=>"آمار"]]
+        ],'resize_keyboard'=>true
+        ])
+    ]);
+    file_put_contents("start.txt","$txt");
+}
+else if($txt == "/help" || $txt == "راهنما" && $chat_id == $admin ||$chat_id == $admin2) {
+    bridge("sendMessage", [
+        'chat_id' => $chat_id,
+        'text' => "به راهنمای ربات خوش آمدید😉
+
+برای تنظیم آیدی کانال ، آیدی کانال خود را همراه با @ بعد از دستور /setchannel قرار دهید.
+برای مثال :
+``` @ch_jockdoni```
+➖➖➖➖➖➖
+برای تنظیم متن شروع ، متن را پس از دستور /setstart قرار دهید
+برای مثال:
+ سلام به ربات سین ساز خوش اومدی😉
+میتوانید از مقادیر زیر برای نمایش پروفایل کاربر استفاده کنید
+FRNAME = نام کاربر
+LSNAME = فامیلی کاربر
+CHID = آیدی عددی کاربر
+TIME = زمان
+DATE = تاریخ
+➖➖➖➖➖➖
+برای ارسال پیام به همه اعضا میتوانید از دستور /sendtoall استفاده نمایید (متن پیام بعد از دستور) برای مثال :
+```/sendtoall```
+```سلام به همه دوستان همین حالا عضو کانال ما شوید```
+```@ch_jockdoni```
+➖➖➖➖➖➖
+برای دریافت آمار ربات دستور /state را ارسال کنید. 😉
+➖➖➖➖➖➖
+فرمت متن HTML میباشد.😊",
+        'parse_mode'=>"Markdown"
+    ]);
+}else if (preg_match('/^\/([Ss]endtoall)/' ,$txt) && $chat_id == $admin) {
+    $strh = str_replace("/sendtoall", "", $txt);
+    $ttxtt = file_get_contents('Member.txt');
+    $x = $strh;
+    if (contains("FRNAME", $x)) {
+        $x = str_replace("FRNAME", $firstname, $x);
+    }
+    if (contains("CHID", $x)) {
+        $x = str_replace("CHID", $chat_id, $x);
+    }if (contains("LSNAME", $x)) {
+        $x = str_replace("LSNAME", $lastname, $x);
+    }
+    $membersidd = explode("\n", $ttxtt);
+    for ($y = 0; $y < count($membersidd); $y++) {
+        bridge("sendMessage", [
+            'chat_id' => $membersidd[$y],
+            "text" => $x,
+            "parse_mode" => "HTML"
+        ]);
+    }
+    $memcout = count($membersidd) - 1;
+    bridge("sendMessage", [
+        'chat_id' => $admin,
+        "text" => " پیام شما به $memcount   نفر ارسال شد😉",
+        "parse_mode" => "HTML"
+    ]);
+}else if (preg_match('/^\/([Ss]etstart)/' ,$txt) && $chat_id == $admin) {
+    $setsta = str_replace("/setstart", "", $txt);
+    $y = $setsta;
+    if (contains("FRNAME", $y)) {
+        $x = str_replace("FRNAME", $firstname, $y);
+    }
+    if (contains("CHID", $y)) {
+        $x = str_replace("CHID", $chat_id, $y);
+    }if (contains("LSNAME", $y)) {
+        $x = str_replace("LSNAME", $lastname, $y);
+    }
+    file_put_contents("start.txt","$y");
+
+    bridge("sendMessage", [
+        'chat_id' => $admin,
+        "text" => "متن شروع به 
+        $y
+        تغییر یافت",
+        "parse_mode" => "HTML"
+    ]);
+}else if (preg_match('/^\/([Ss]etchannel)/' ,$txt) && $chat_id == $admin) {
+    $setch = str_replace("/setchannel", "", $txt);
+
+    file_put_contents("channel.txt","$setch");
+
+    bridge("sendMessage", [
+        'chat_id' => $admin,
+        "text" => "آیدی کانال به 
+        $setch
+        تغییر یافت",
+        "parse_mode" => "HTML"
+    ]);
+}else if (preg_match('/^\/([Ss]tate)/' ,$txt) || $txt == "آمار" && $chat_id == $admin) {
+    $user = file_get_contents('Member.txt');
+    $member_id = explode("\n", $user);
+    $member_count = count($member_id) - 1;
+    bridge('sendMessage', [
+        'chat_id' => $chat_id,
+        'text' => "👥 تعداد کاربران جدید ربات شما : $member_count",
+        'parse_mode' => 'HTML'
+    ]);
+}else if(preg_match('/^\/([Tt]ophoto)/',$txt) and $reply){
+    $usernamed = json_decode(file_get_contents("https://api.telegram.me/bot$token/getMe"));
+    if($reply->sticker){
+        $file = $reply->sticker->gif;
+        $get = bot('getfile',['file_id'=>$file]);
+        $patch = $get->result->file_path;
+        file_put_contents('Admin/Sticker.png',file_get_contents('https://api.telegram.org/file/bot'.API_KEY.'/'.$patch));
+        bridge("sendPhoto" ,[
+            'chat_id'=>$chat_id,
+            'photo'=>new CURLFile('Admin/Sticker.png'),
+            'caption'=>"@countmsgbot and @".$usernamed->result->username
+        ]);
+    }
+}else{
+    $to_channel = bridge("forwardMessage", [
+        'chat_id' => $channel,
+        'from_chat_id' => $chat_id,
+        'message_id' => $message_id
+    ])->result->message_id;
+
+    bridge("forwardMessage", [
+        'chat_id' => $chat_id,
+        'from_chat_id' => $channel,
+        'message_id' => $to_channel
+    ]);
+
+    bridge("forwardMessage", [
+        'chat_id' => $chat_id,
+        'from_chat_id' => "@ch_jockdoni",
+        'message_id' => "791"
+    ]);
+}
